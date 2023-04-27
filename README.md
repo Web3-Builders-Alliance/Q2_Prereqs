@@ -7,7 +7,7 @@ In this lesson, we are going to:
 2. Use our Public Key to airdrop ourselves some Solana devnet tokens
 3. Make Solana transfers on devnet
 4. Empty your devnet wallet into your WBA wallet
-5. Use our WBA Private Key to enroll in the WBA enrollment dApp
+
 
 Prerequisites:
 1. Have NodeJS installed
