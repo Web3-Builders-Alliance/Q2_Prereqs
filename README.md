@@ -50,7 +50,7 @@ Finally, we're going to create some scripts in our `package.json` file to let us
   "scripts": {
     "keygen": "ts-node ./keygen.ts",
     "airdrop": "ts-node ./airdrop.ts",
-    "transfer": "ts-node ./transfer.ts",
+    "transfer": "ts-node ./transfer.ts"
 
   },
   "dependencies": {
@@ -186,7 +186,7 @@ And create a devnet connection:
 const connection = new Connection("https://api.devnet.solana.com");
 ```
 
-Now we're going to create a transaction using `@solana/web3.js` to transfer 0.1 SOL from our dev wallet to our WBA wallet address on the Solana devenet. Here's how we do that:
+Now we're going to create a transaction using `@solana/web3.js` to transfer 0.1 SOL from our dev wallet to our WBA wallet address on the Solana devnet. Here's how we do that:
 ```ts
 (async () => {
     try {
