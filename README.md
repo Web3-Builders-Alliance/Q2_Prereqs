@@ -50,7 +50,7 @@ Finally, we're going to create some scripts in our `package.json` file to let us
   "scripts": {
     "keygen": "ts-node ./keygen.ts",
     "airdrop": "ts-node ./airdrop.ts",
-    "transfer": "ts-node ./transfer.ts",
+    "transfer": "ts-node ./transfer.ts"
 
   },
   "dependencies": {
