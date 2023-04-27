@@ -8,7 +8,6 @@ In this lesson, we are going to:
 3. Make Solana transfers on devnet
 4. Empty your devnet wallet into your WBA wallet
 
-
 Prerequisites:
 1. Have NodeJS installed
 2. Have yarn installed
@@ -36,7 +35,6 @@ yarn add -D ts-node
 touch keygen.ts
 touch airdrop.ts
 touch transfer.ts
-touch enroll.ts
 yarn tsc --init --rootDir ./ --outDir ./dist --esModuleInterop --lib ES2019 --module commonjs --resolveJsonModule true --noImplicitAny true
 ```
 
@@ -51,8 +49,7 @@ Finally, we're going to create some scripts in our `package.json` file to let us
   "scripts": {
     "keygen": "ts-node ./keygen.ts",
     "airdrop": "ts-node ./airdrop.ts",
-    "transfer": "ts-node ./transfer.ts",
-    "enroll": "ts-node ./enroll.ts"
+    "transfer": "ts-node ./transfer.ts"
   },
   "dependencies": {
     "@solana/web3.js": "^1.75.0",
