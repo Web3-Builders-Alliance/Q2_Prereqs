@@ -1,4 +1,4 @@
-# Q2_Prereqs
+# Q2_Enrollment_TS
 
 # Lesson One: Enrollment dApp
 
@@ -7,7 +7,7 @@ In this lesson, we are going to:
 2. Use our Public Key to airdrop ourselves some Solana devnet tokens
 3. Make Solana transfers on devnet
 4. Empty your devnet wallet into your WBA wallet
-
+5. Use our WBA Private Key to enroll in the WBA enrollment dApp
 
 Prerequisites:
 1. Have NodeJS installed
@@ -36,6 +36,7 @@ yarn add -D ts-node
 touch keygen.ts
 touch airdrop.ts
 touch transfer.ts
+touch enroll.ts
 yarn tsc --init --rootDir ./ --outDir ./dist --esModuleInterop --lib ES2019 --module commonjs --resolveJsonModule true --noImplicitAny true
 ```
 
@@ -51,7 +52,7 @@ Finally, we're going to create some scripts in our `package.json` file to let us
     "keygen": "ts-node ./keygen.ts",
     "airdrop": "ts-node ./airdrop.ts",
     "transfer": "ts-node ./transfer.ts",
-
+    "enroll": "ts-node ./enroll.ts"
   },
   "dependencies": {
     "@solana/web3.js": "^1.75.0",
@@ -271,7 +272,151 @@ To send all of the remaining lamports out of our dev wallet to our WBA wallet, w
 
 As you can see, we crated a mock version of the transaction to perform a fee calculation before removing and readding the transfer instruction, signing and sending it. You can see from the outputted transaction signature on the block explorer here that the entire value was sent to the exact lamport:
 ```
-Check out your TX here (This is the TX Hash you will submit in the submission form):
+Check out your TX here:
 https://explorer.solana.com/tx/4dy53oKUeh7QXr15wpKex6yXfz4xD2hMtJGdqgzvNnYyDNBZXtcgKZ7NBvCj7PCYU1ELfPZz3HEk6TzT4VQmNoS5?cluster=devnet
 ```
 
+## 5. Submit your completion of the WBA pre-requisites program
+When you first signed up for the course, you gave WBA a Solana address for certification and your Github account. Your challenge now is to use the devnet tokens you just airdropped and transferred to yourself to confirm your enrollment in the course on the Solana devnet.
+
+In order to do this, we're going to have to quickly familiarise ourselves with two key concepts of Solana:
+
+1. **PDA (Program Derived Address)** - A PDA is used to enable our program to "sign" transactions with a Public Key derived from some kind of deterministic seed. This is then combined with an additional "bump" which is a single additional byte that is generated to "bump" this Public Key off the elliptic curve. This means that there is no matching Private Key for this Public Key, as if there were a matching private key and someone happened to possess it, they would be able to sign on behalf of the program, creating security concerns.
+
+2. **IDL (Interface Definition Language)** - Similar to the concept of ABI in other ecosystems, an IDL specifies a program's public interface. Though not mandatory, most programs on Solana do have an IDL, and it is the primary way we typically interact with programs on Solana. It defines a Solana program's account structures, instructions, and error codes. IDLs are .json files, so they can be used to generate client-side code, such as Typescript type definitions, for ease of use.
+
+Let's dive into it!
+
+#### 5.1 Consuming an IDL in Typescript
+For the purposes of this class, we have published a WBA pre-requisite course program to the Solana Devnet with a public IDL that you can use to provide onchain proof that you've made it to the end of our pre-requisite coursework. 
+
+You can find our program on Devnet by this address: [HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1](https://explorer.solana.com/address/HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1?cluster=devnet)
+
+If we explore the devnet explorer, there is a tab called "[Anchor Program IDL](https://explorer.solana.com/address/HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1/anchor-program?cluster=devnet)" which reveals the IDL of our program. If you click the clipboard icon at the top level of this JSON object, you can copy the IDL directly from the browser. The result should look something like this:
+
+```json
+{
+  "version": "0.1.0",
+  "name": "wba_prereq",
+  "instructions": [
+    {
+      "name": "complete",
+      ...
+    }
+  ]
+}
+```
+
+As you can see, this defines the schema of our program with a single instruction called `complete` that takes in 1 argument:
+1. `github` - a byte representation of the utf8 string of your github account name
+
+As well as 3 accounts:
+1. `signer` - your public key you use to sign up for the WBA course
+2. `prereq` - an account we create in our program with a custom PDA seed (more on this later)
+3. `systemAccount` - the Solana system program which is used to execute account instructions
+
+In order for us to consume this in typescript, we're going to go and create a `type` and an `object` for it. Let's start by creating a folder in our root directory called `programs` so we can easily add additional program IDLs in the future, along with a new typescript file called `wba_prereq.ts`.
+
+```sh
+mkdir programs
+touch ./programs/wba_prereq.ts
+```
+
+Now that we've created the `wba_prereq.ts` file, we're going to open it up and create our `type` and `object`.
+
+```ts
+export type WbaPrereq =  = { "version": "0.1.0", "name": "wba_prereq", ...etc }
+export const IDL: WbaPrereq = { "version": "0.1.0", "name": "wba_prereq", ...etc }
+```
+
+Our `type` and `object` are now ready to import this into Typescript, but to actually consume it, first, we're going to need to install Anchor, a Solana development framework, as well as define a few other imports.
+
+Let's first install `@project-serum/anchor`:
+```sh
+yarn add @project-serum/anchor
+```
+
+Now let's open up `enroll.ts` and define the following imports:
+
+```ts
+import { Connection, Keypair, SystemProgram, PublicKey } from "@solana/web3.js"
+import { Program, Wallet, AnchorProvider, Address } from "@project-serum/anchor"
+import { WbaPrereq, IDL } from "./programs/wba_prereq";
+import wallet from "./wba-wallet.json"
+```
+
+Note that we've imported a new wallet filed called `wba-wallet.json`. Unlike the dev-wallet.json, this should contain the private key for an account you might care about. To stop you from accidentally comitting your private key(s) to a git repo, consider adding a `.gitignore` file. Here's an example that will ignore all files that end in `wallet.json`:
+
+```.gitignore
+*wallet.json
+```
+
+As with last time, we're going to create a keypair and a connection:
+```ts
+// We're going to import our keypair from the wallet file
+const keypair = Keypair.fromSecretKey(new Uint8Array(wallet));
+
+// Create a devnet connection
+const connection = new Connection("https://api.devnet.solana.com");
+```
+
+To register ourselves as having completed pre-requisites, we need to submit our github account name as a utf8 buffer:
+```ts
+// Github account
+const github = Buffer.from("<your github account>", "utf8");
+```
+
+Now we're going to use our connection and wallet to create an Anchor provider:
+```ts
+// Create our anchor provider
+const provider = new AnchorProvider(connection, new Wallet(keypair), { commitment: "confirmed"});
+```
+
+Finally, we can use the Anchor `provider`, our IDL `object` and our IDL `type` to create our anchor `program`, allowing us to interact with the WBA prerequisite program.
+```ts
+// Create our program
+const program = new Program<WbaPrereq>(IDL, "HC2oqz2p6DEWfrahenqdq2moUcga9c9biqRBcdK3XKU1" as Address, provider);
+```
+
+#### 5.2 Creating a PDA
+Now we need to create a PDA for our `prereq` account. The seeds for this particular PDA are:
+
+1. A Utf8 `Buffer` of the `string`: "prereq"
+2. The `Buffer` of the public key of the transaction signer
+
+There are then combined into a single Buffer, along with the `program` ID, to create a deterministic address for this account. The `findProgramAddressSync` function is then going to combine this with a `bump` to find an address that is not on the elliptic curve and return the derived address, as well as the bump which we will not be using in this example:
+
+```ts
+// Create the PDA for our enrollment account
+const enrollment_seeds = [Buffer.from("prereq"), keypair.publicKey.toBuffer()];
+const [enrollment_key, _bump] = PublicKey.findProgramAddressSync(enrollment_seeds, program.programId);
+```
+
+Remember to familiarize yourself with this concept as you'll be using it often!
+
+#### 5.3 Putting it all together
+Now that we have everything we need, it's finally time to put it all together and make a transaction interacting with the devnet program to submit our `github` account and our `publicKey` to signify our completion of the WBA pre-requisite materials!
+
+```ts
+// Execute our enrollment transaction
+(async () => {
+    try {
+        const txhash = await program.methods
+        .complete(github)
+        .accounts({
+            signer: keypair.publicKey,
+            prereq: enrollment_key,
+            systemProgram: SystemProgram.programId,
+        })
+        .signers([
+            keypair
+        ]).rpc();
+        console.log(`Success! Check out your TX here: 
+        https://explorer.solana.com/tx/${txhash}?cluster=devnet`);
+    } catch(e) {
+        console.error(`Oops, something went wrong: ${e}`)
+    }
+})();
+```
+
+Congratulations, you have completed the WBA Solana Q2 Pre-requisite coursework!
