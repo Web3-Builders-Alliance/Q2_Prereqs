@@ -164,7 +164,7 @@ https://explorer.solana.com/tx/459QHLHJBtkHgV3BkzGKo4CDSWzNr8HboJhiQhpx2dj8xPVqx
 ## 3. Transfer tokens to your WBA Address
 Now we have some devnet SOL to play with, it's time to create our first native Solana token transfer. When you first signed up for the course, you gave WBA a Solana address for certification. We're going to be sending some devnet SOL to this address so we can use it going forward.
 
-We're gong to open up `transfer.ts` and import the following items from `@solana/web3.js`:
+We're going to open up `transfer.ts` and import the following items from `@solana/web3.js`:
 ```ts
 import { Transaction, SystemProgram, Connection, Keypair, LAMPORTS_PER_SOL, sendAndConfirmTransaction, PublicKey } from "@solana/web3.js"
 ```
@@ -270,7 +270,7 @@ To send all of the remaining lamports out of our dev wallet to our WBA wallet, w
 })();
 ```
 
-As you can see, we crated a mock version of the transaction to perform a fee calculation before removing and readding the transfer instruction, signing and sending it. You can see from the outputted transaction signature on the block explorer here that the entire value was sent to the exact lamport:
+As you can see, we created a mock version of the transaction to perform a fee calculation before removing and reading the transfer instruction, signing and sending it. You can see from the outputted transaction signature on the block explorer here that the entire value was sent to the exact lamport:
 ```
 Check out your TX here:
 https://explorer.solana.com/tx/4dy53oKUeh7QXr15wpKex6yXfz4xD2hMtJGdqgzvNnYyDNBZXtcgKZ7NBvCj7PCYU1ELfPZz3HEk6TzT4VQmNoS5?cluster=devnet
@@ -325,7 +325,7 @@ touch ./programs/wba_prereq.ts
 Now that we've created the `wba_prereq.ts` file, we're going to open it up and create our `type` and `object`.
 
 ```ts
-export type WbaPrereq =  = { "version": "0.1.0", "name": "wba_prereq", ...etc }
+export type WbaPrereq = { "version": "0.1.0", "name": "wba_prereq", ...etc }
 export const IDL: WbaPrereq = { "version": "0.1.0", "name": "wba_prereq", ...etc }
 ```
 
@@ -384,7 +384,7 @@ Now we need to create a PDA for our `prereq` account. The seeds for this particu
 1. A Utf8 `Buffer` of the `string`: "prereq"
 2. The `Buffer` of the public key of the transaction signer
 
-There are then combined into a single Buffer, along with the `program` ID, to create a deterministic address for this account. The `findProgramAddressSync` function is then going to combine this with a `bump` to find an address that is not on the elliptic curve and return the derived address, as well as the bump which we will not be using in this example:
+They are then combined into a single Buffer, along with the `program` ID, to create a deterministic address for this account. The `findProgramAddressSync` function is then going to combine this with a `bump` to find an address that is not on the elliptic curve and return the derived address, as well as the bump which we will not be using in this example:
 
 ```ts
 // Create the PDA for our enrollment account
