@@ -242,7 +242,7 @@ To send all of the remaining lamports out of our dev wallet to our WBA wallet, w
         transaction.feePayer = from.publicKey;
 
         // Calculate exact fee rate to transfer entire SOL amount out of account minus fees
-        const fee = (await connection.getFeeForMessage(transaction.compileMessage(), 'confirmed')).value || 0;
+        const fee = await transaction.getEstimatedFee(connection) as number;
 
         // Remove our transfer instruction to replace it
         transaction.instructions.pop();
